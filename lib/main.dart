@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter List App',
       theme: ThemeData(
-        primarySwatch: Color.fromARGB(255, 255, 170, 198),
+        primarySwatch: Colors.pink,
       ),
       home: const MyHomePage(title: 'List App'),
     );
@@ -58,58 +58,124 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _updateItem(int index) {
+    setState(() {
+      _items[index] = ListItem(
+        _idController.text,
+        _nameController.text,
+        _groupController.text,
+      );
+    });
+
+    _idController.clear;
+    _nameController.clear;
+    _groupController.clear;
+
+    Navigator.of(context).pop();
+  }
+
+  void _deleteItem(int index) {
+    setState(() {
+      _items.removeAt(index);
+    });
+  }
+
+  void _showForm(BuildContext ctx,
+      {required ListItem? item, required int index}) {
+    if (item != null) {
+      _idController.text = item.id;
+      _nameController.text = item.id;
+      _groupController.text = item.id;
+    }
+
+    showModalBottomSheet(
+      context: ctx,
+      builder: (_) {
+        return Container(
+          padding: const EdgeInsets.all(15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              TextField(
+                controller: _idController,
+                decoration: const InputDecoration(labelText: 'ID'),
+              ),
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              TextField(
+                controller: _groupController,
+                decoration: const InputDecoration(labelText: 'Group'),
+              ),
+              ElevatedButton(
+                child: Text(item == null ? 'Add' : 'Update'),
+                onPressed: () => item == null ? _addItem() : _updateItem(index),
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Simple List App'),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+      body: ListView.builder(
+        itemCount: _items.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(_items[index].name),
+            subtitle:
+                Text('ID${_items[index].id}, Group: ${_items[index].group}'),
+            trailing: SizedBox(
+              width: 100,
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () =>
+                        _showForm(context, item: _items[index], index: index),
+                    icon: const Icon(Icons.edit),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Are you sure?'),
+                        content: const Text('Do you want to delete the item?'),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('Cancel'),
+                            onPressed: () {
+                              Navigator.of(ctx).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: const Text('Delete'),
+                            onPressed: () {
+                              _deleteItem(index);
+                              Navigator.of(ctx).pop();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        onPressed: () => _showForm(context, index: _items.length, item: null),
+      ),
     );
   }
 }
